@@ -13,7 +13,7 @@ def get_or_create_usuario(db: Session, android_id: str) -> usuario_model.Usuario
         db.refresh(usuario)
     return usuario
 
-def salvar_conexoes(db: Session, usuario_id: int, conexoes: List[conexao_schema.ConexaoBase], captura_id: int):
+def salvar_conexoes(db: Session, usuario_id: int, conexoes: List[conexao_schema.ConexaoBase], captura_id: str):
     for c in conexoes:
         conexao = conexao_model.ConexaoCapturada(
             usuario_id=usuario_id,
