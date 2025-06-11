@@ -1,18 +1,12 @@
 from langchain.agents import AgentExecutor, create_openai_functions_agent
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_google_genai import ChatGoogleGenerativeAI
-from app.core.tools.historico_tool import historico_tool
-from app.core.tools.estatisticas_tool import estatisticas_tool
-from app.core.tools.ip_tool import ip_tool
-from app.core.tools.protocolo_tool import protocolo_tool
+from app.core.mcp_tools import historico_tool, estatisticas_tool, ip_tool, protocolo_tool
 from langchain.prompts import (
-    ChatPromptTemplate,
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
-    AIMessagePromptTemplate,
-    MessagesPlaceholder
+    AIMessagePromptTemplate
 )
-
 
 class LangChainService:
 
@@ -35,26 +29,27 @@ class LangChainService:
             protocolo_tool,
         ]
 
-        # Monta o prompt (inicial)
-        
+        # Prompt com espaço reservado para histórico do agente
         prompt = ChatPromptTemplate.from_messages([
-            SystemMessagePromptTemplate.from_template("Você é um analista de cibersegurança. Responda em português."),
+            SystemMessagePromptTemplate.from_template(
+                "Você é um analista de cibersegurança. Responda em português. Use ferramentas quando necessário."
+            ),
             HumanMessagePromptTemplate.from_template("{input}"),
-            AIMessagePromptTemplate.from_template("{agent_scratchpad}")
+            MessagesPlaceholder(variable_name="agent_scratchpad")
         ])
 
-        # Cria o agente
+        # Criação do agente com suporte a funções (tools)
         self.agent = create_openai_functions_agent(
             llm=self.llm,
             tools=self.tools,
             prompt=prompt
         )
 
-        # Executor
         self.executor = AgentExecutor(
             agent=self.agent,
             tools=self.tools,
-            verbose=True  # Para debug
+            verbose=True,
+            handle_parsing_errors=True
         )
 
     def analisar(self, input_data: str):
@@ -62,13 +57,7 @@ class LangChainService:
         return response["output"]
 
     def obter_reputacao_ip(self, ip_destino: str):
-        """
-        Chama diretamente a tool de reputação de IP.
-        """
         return ip_tool.run(ip_destino)
 
     def obter_estatisticas_usuario(self, android_id: str):
-        """
-        Chama diretamente a tool de estatísticas do usuário.
-        """
         return estatisticas_tool.run(android_id)
