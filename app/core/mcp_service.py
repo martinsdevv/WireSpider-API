@@ -7,6 +7,7 @@ from app.core.langchain_service import LangChainService
 import json
 import re
 import logging
+import httpx
 
 class MCPService:
 
@@ -111,6 +112,7 @@ class MCPService:
 
         # Calcular a confiança
         confianca = MCPService.calcular_confianca(conexao, reputacao_ip, estatisticas_usuario)
+        ip_loc = buscar_geolocalizacao(conexao.ip_destino)
 
         # Salvar a análise
         analise = analise_model.AnaliseIA(
@@ -130,6 +132,18 @@ class MCPService:
             risco=resposta_ia["risco"],
             comportamento_suspeito=resposta_ia["comportamento_suspeito"],
             recomendacao=resposta_ia["recomendacao"],
-            confianca=confianca
+            confianca=confianca,
+            ip_loc=ip_loc
         )
 
+
+def buscar_geolocalizacao(ip: str) -> str:
+    try:
+        response = httpx.get(f"https://ipwho.is/{ip}", timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success"):
+                return f"{data['latitude']},{data['longitude']}"
+    except Exception as e:
+        print(f"[GeoIP] Erro ao buscar localização de {ip}: {e}")
+    return ""
