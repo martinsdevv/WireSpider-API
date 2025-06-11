@@ -14,3 +14,4 @@ class AnaliseResponse(BaseModel):
     comportamento_suspeito: Union[str, List[str]]
     recomendacao: Union[str, List[str]]
     confianca: float
+    ip_loc: str
